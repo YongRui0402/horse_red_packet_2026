@@ -1,9 +1,8 @@
-
-name: Deploy to GitHub Pages
+name: Deploy GitHub Pages
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main", "master"] # 偵測你的分支
 
 permissions:
   contents: read
@@ -20,8 +19,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 20 # 對應你原本的 image: node:20
 
       - name: Install dependencies
         run: npm install
@@ -29,16 +27,20 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          API_KEY: ${{ secrets.API_KEY }}
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+          API_KEY: ${{ secrets.API_KEY }} # 讀取 GitHub Secrets
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: ./dist # 對應你原本 npm run build 產出的資料夾
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

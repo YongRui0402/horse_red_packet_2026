@@ -3,7 +3,14 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Scores, ResultData, DimensionComments } from "../types";
 import { EASTER_EGG_KEYWORDS, SCORE_LEVELS } from "../constants";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+// 封裝一個取得 AI 實例的函式，確保在呼叫時才讀取 process.env.API_KEY
+function getAiInstance() {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API key must be set when using the Gemini API. 請檢查 CI/CD 變數設定。");
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 function checkEasterEgg(text: string): boolean {
   if (EASTER_EGG_KEYWORDS.some(k => text.includes(k))) return true;
@@ -33,6 +40,7 @@ export async function analyzeGreeting(greeting: string, nickname: string): Promi
     };
   }
 
+  const ai = getAiInstance();
   const prompt = `你是一位精通中華文化與2026馬年(丙午年)春節祝福的AI紅包閱卷官。
 請分析以下來自「${nickname}」的吉祥話： "${greeting}"
 
