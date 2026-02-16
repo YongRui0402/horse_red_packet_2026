@@ -25,33 +25,33 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     try {
       const shareText = `${result.nickname} 在 2026 馬年 AI 紅包獲得了 NT$ ${result.amount}！\n快來試試你的馬年手氣吧！`;
       
-      // 修復截圖被切掉的核心邏輯：
-      // 1. 先捲動到頂部確保 html2canvas 座標計算正確
+      // 確保畫面在頂部
       window.scrollTo(0, 0);
 
       const canvas = await html2canvas(cardRef.current, {
-        scale: 2, // 2倍率兼顧清晰度與檔案大小
+        scale: 3, // 提高解析度
         useCORS: true,
-        backgroundColor: '#B30000', // 確保背景底色一致
+        backgroundColor: '#B30000',
         logging: false,
-        // 確保捕捉完整高度與寬度
-        width: cardRef.current.offsetWidth,
-        height: cardRef.current.offsetHeight,
+        width: cardRef.current.scrollWidth,
+        height: cardRef.current.scrollHeight,
         onclone: (clonedDoc) => {
-          // 在克隆出的 DOM 中隱藏不需要的按鈕，確保截圖乾淨
           const noScreenshotElems = clonedDoc.querySelectorAll('.no-screenshot');
           noScreenshotElems.forEach(el => (el as HTMLElement).style.display = 'none');
           
-          // 強制克隆出的卡片容器取消動畫位移，避免截圖時還在跑動畫
           const clonedCard = clonedDoc.querySelector('.result-card-container');
           if (clonedCard) {
-            (clonedCard as HTMLElement).style.transform = 'none';
-            (clonedCard as HTMLElement).style.opacity = '1';
+            const cardEl = clonedCard as HTMLElement;
+            cardEl.style.transform = 'none';
+            cardEl.style.opacity = '1';
+            cardEl.style.margin = '0';
+            // 強制設定寬度確保佈局不崩潰
+            cardEl.style.width = '400px'; 
           }
         }
       });
 
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 0.9));
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
       
       if (blob && navigator.share && navigator.canShare) {
         const file = new File([blob], '2026-horse-red-packet.png', { type: 'image/png' });
@@ -66,7 +66,6 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
         }
       }
 
-      // 如果瀏覽器不支援 Web Share API，則降級使用圖片下載或 LINE 連結
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `馬年福卡-${result.nickname}.png`;
@@ -78,7 +77,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
       
     } catch (err) {
       console.error('Sharing failed', err);
-      alert('分享失敗，請稍後再試');
+      alert('製作圖片失敗，可能是瀏覽器限制，請嘗試手動截圖');
     } finally {
       setIsSharing(false);
     }
@@ -92,13 +91,13 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
         className={`result-card-container bg-white rounded-2xl shadow-2xl p-6 transition-all duration-1000 ease-out border-[8px] border-[#C5A059] relative overflow-hidden ${
           showCard ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-95'
         }`}
-        style={{ width: '100%', maxWidth: '400px' }}
+        style={{ width: '400px' }} // 固定寬度有利於 html2canvas 計算
       >
         <div className="flex flex-col items-center">
           {/* Header Section */}
-          <div className="text-center relative mb-6">
-            <div className="absolute -top-1 -left-8 text-[#B30000] opacity-10 text-6xl pointer-events-none">🧧</div>
-            <h3 className="text-[#B30000] font-serif text-2xl font-bold tracking-widest flex items-center justify-center gap-2">
+          <div className="text-center relative mb-6 w-full">
+            <div className="absolute -top-1 left-2 text-[#B30000] opacity-10 text-5xl pointer-events-none">🧧</div>
+            <h3 className="text-[#B30000] font-serif text-2xl font-bold tracking-widest flex items-center justify-center gap-2 flex-wrap">
               <span className="text-red-700">{result.nickname}</span> 的專屬福卡
             </h3>
             <p className="text-gray-400 font-serif text-[11px] mt-2 tracking-widest">2026 丙午年 · 智慧紅包鑑定</p>
@@ -108,7 +107,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           {/* Blessing Content Box */}
           <div className="w-full bg-[#FFFBF0] p-6 rounded-xl border border-[#C5A059]/20 italic text-center relative shadow-inner mb-6">
             <span className="absolute top-2 left-4 text-4xl text-[#C5A059] opacity-30 font-serif">“</span>
-            <p className="text-[#5D4037] text-lg leading-relaxed font-serif px-2 py-2">
+            <p className="text-[#5D4037] text-lg leading-relaxed font-serif px-2 py-2 break-words">
               {result.greeting}
             </p>
             <span className="absolute bottom-1 right-4 text-4xl text-[#C5A059] opacity-30 font-serif">”</span>
@@ -127,24 +126,28 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
 
           {/* Radar Chart Section */}
-          <div className="w-full bg-gray-50/30 rounded-2xl p-2 border border-gray-100 mb-6">
+          <div className="w-full bg-gray-50/30 rounded-2xl p-2 border border-gray-100 mb-6 flex justify-center">
             <RadarChart scores={result.scores} />
           </div>
 
-          {/* Dimension Scores Table */}
+          {/* Dimension Scores Table - 補齊五個維度 */}
           <div className="w-full space-y-3 mb-8 px-2">
             {[
               { label: '文采', score: result.scores.literary, comment: result.dimensionComments.literary },
               { label: '應景', score: result.scores.relevance, comment: result.dimensionComments.relevance },
+              { label: '情緒', score: result.scores.emotion, comment: result.dimensionComments.emotion },
               { label: '發財', score: result.scores.wealth, comment: result.dimensionComments.wealth },
               { label: '福氣', score: result.scores.blessing, comment: result.dimensionComments.blessing },
             ].map((d) => (
-              <div key={d.label} className="flex items-center gap-4">
-                <span className="font-bold text-[#8B4513] text-sm w-10">{d.label}</span>
-                <div className="bg-[#FDF2F2] px-3 py-1 rounded-lg min-w-[45px] text-center border border-red-100">
+              <div key={d.label} className="flex items-start gap-3">
+                <span className="font-bold text-[#8B4513] text-sm w-10 mt-1 flex-shrink-0">{d.label}</span>
+                <div className="bg-[#FDF2F2] px-2 py-1 rounded-lg min-w-[40px] text-center border border-red-100 flex-shrink-0">
                   <span className="text-[#B30000] font-mono font-bold text-sm">{d.score}</span>
                 </div>
-                <span className="flex-1 text-gray-500 text-sm italic truncate text-right">{d.comment}</span>
+                {/* 移除 truncate，改用 break-words 並向右對齊，確保文字完整 */}
+                <span className="flex-1 text-gray-500 text-[11px] italic leading-tight text-right break-words pt-1">
+                  {d.comment}
+                </span>
               </div>
             ))}
           </div>
