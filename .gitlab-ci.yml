@@ -3,6 +3,8 @@ image: node:20
 
 pages:
   stage: deploy
+  tags:
+    - docker
   script:
     - npm install
     - npm run build
