@@ -3,11 +3,12 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Scores, ResultData, DimensionComments } from "../types";
 import { EASTER_EGG_KEYWORDS, SCORE_LEVELS } from "../constants";
 
-// 封裝一個取得 AI 實例的函式，確保在呼叫時才讀取 process.env.API_KEY
+// 封裝一個取得 AI 實例的函式
 function getAiInstance() {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API key must be set when using the Gemini API. 請檢查 CI/CD 變數設定。");
+  if (!apiKey || apiKey === "" || apiKey === "undefined") {
+    console.error("Gemini API Key 缺失！");
+    throw new Error("系統設定錯誤：找不到有效的 API Key。請確認 GitHub Actions Secrets 設定。");
   }
   return new GoogleGenAI({ apiKey });
 }
@@ -40,7 +41,23 @@ export async function analyzeGreeting(greeting: string, nickname: string): Promi
     };
   }
 
-  const ai = getAiInstance();
+  let ai;
+  try {
+    ai = getAiInstance();
+  } catch (e: any) {
+    return {
+      nickname: nickname || "系統提示",
+      amount: 0,
+      comment: "⚠️ 檢測不到 API Key。請確保在 GitHub 倉庫設定中添加了名為 API_KEY 的 Secret。",
+      scores: { literary: 0, relevance: 0, emotion: 0, wealth: 0, blessing: 0 },
+      dimensionComments: {
+        literary: "密鑰缺失", relevance: "密鑰缺失", emotion: "密鑰缺失", wealth: "密鑰缺失", blessing: "密鑰缺失"
+      },
+      isEasterEgg: false,
+      greeting
+    };
+  }
+
   const prompt = `你是一位精通中華文化與2026馬年(丙午年)春節祝福的AI紅包閱卷官。
 請分析以下來自「${nickname}」的吉祥話： "${greeting}"
 
@@ -116,7 +133,7 @@ export async function analyzeGreeting(greeting: string, nickname: string): Promi
     return {
       nickname: nickname || "匿名馬迷",
       amount: 0,
-      comment: "AI 好像在趕路去馬年，隨機發個紅包給你！",
+      comment: "AI 好像在趕路去馬年，隨機發個紅包給你！(API 呼叫失敗)",
       scores: { literary: 50, relevance: 50, emotion: 50, wealth: 50, blessing: 50 },
       dimensionComments: {
         literary: "普普通通", relevance: "尚可", emotion: "平淡", wealth: "有望", blessing: "安康"
