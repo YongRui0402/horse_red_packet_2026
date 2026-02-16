@@ -18,25 +18,38 @@
         .font-serif {
             font-family: 'Noto Serif TC', serif;
         }
-        @keyframes envelope-shake {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(3deg); }
-            50% { transform: rotate(-3deg); }
-            75% { transform: rotate(3deg); }
-            100% { transform: rotate(0deg); }
+        .imperial-texture {
+            background-image: radial-gradient(circle at center, #c20000 0%, #b30000 100%);
+            background-attachment: fixed;
         }
-        .animate-shake {
-            animation: envelope-shake 0.5s infinite;
+        .ornate-border {
+            border: 2px solid #C5A059;
+            position: relative;
+        }
+        .ornate-border::before, .ornate-border::after, .ornate-corner-bl, .ornate-corner-br {
+            content: '✦';
+            position: absolute;
+            color: #C5A059;
+            font-size: 12px;
+            z-index: 10;
+        }
+        .ornate-corner-tl { top: -8px; left: -6px; position: absolute; }
+        .ornate-corner-tr { top: -8px; right: -6px; position: absolute; }
+        .ornate-corner-bl { bottom: -12px; left: -6px; position: absolute; }
+        .ornate-corner-br { bottom: -12px; right: -6px; position: absolute; }
+
+        @keyframes scrollList {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        .scrolling-content {
+            animation: scrollList 20s linear infinite;
+        }
+        .scrolling-content:hover {
+            animation-play-state: paused;
         }
         .gold-gradient {
             background: linear-gradient(135deg, #C5A059 0%, #E2C98C 50%, #C5A059 100%);
-        }
-        .gold-border {
-            border: 2px solid #C5A059;
-        }
-        .red-envelope-bg {
-            background-color: #B30000;
-            background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
         }
     </style>
 <script type="importmap">
@@ -49,14 +62,14 @@
     "recharts": "https://esm.sh/recharts@^3.7.0",
     "html2canvas": "https://esm.sh/html2canvas@^1.4.1",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.45.4"
   }
 }
 </script>
 </head>
-<body class="red-envelope-bg">
+<body class="imperial-texture">
     <div id="root"></div>
-    <!-- Vite 入口，使用相對路徑 -->
     <script type="module" src="./index.tsx"></script>
 </body>
 </html>
