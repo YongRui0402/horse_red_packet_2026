@@ -1,0 +1,19 @@
+
+image: node:20
+
+pages:
+  stage: deploy
+  script:
+    - npm install
+    - npm run build
+    - rm -rf public
+    - mv dist public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+    - master
+  variables:
+    # 確保在 GitLab CI/CD Settings 中已加入 API_KEY 變數
+    API_KEY: $API_KEY
