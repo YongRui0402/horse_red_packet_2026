@@ -9,14 +9,14 @@ import { THEME_GOLD } from '../constants';
 
 interface Props {
   scores: Scores;
+  height?: number;
 }
 
-const RadarChart: React.FC<Props> = ({ scores }) => {
+const RadarChart: React.FC<Props> = ({ scores, height = 240 }) => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // 增加延遲，確保父容器動畫結束且 DOM 寬高已計算完成
-    const timer = setTimeout(() => setIsReady(true), 800);
+    const timer = setTimeout(() => setIsReady(true), 600);
     return () => clearTimeout(timer);
   }, []);
 
@@ -30,21 +30,19 @@ const RadarChart: React.FC<Props> = ({ scores }) => {
   ];
 
   return (
-    // 加入 min-width: 0 與明確的 min-height 解決 Recharts 警告
-    <div className="w-full h-72 md:h-80 min-w-0 relative flex items-center justify-center" style={{ minHeight: '280px' }}>
+    <div className="w-full min-w-0 relative flex items-center justify-center" style={{ height: `${height}px`, minHeight: `${height}px` }}>
       {!isReady && (
         <div className="flex flex-col items-center justify-center text-[#C5A059]/30 italic text-[10px]">
-          <span className="animate-spin mb-2">🐎</span>
-          繪製能力圖譜中...
+          <span className="animate-spin mb-1 text-lg">🐎</span>
         </div>
       )}
       {isReady && (
-        <ResponsiveContainer width="100%" height="100%" debounce={100}>
-          <RechartsRadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+        <ResponsiveContainer width="100%" height="100%" debounce={50}>
+          <RechartsRadarChart cx="50%" cy="50%" outerRadius="60%" data={data}>
             <PolarGrid stroke="#E2C98C" strokeOpacity={0.2} />
             <PolarAngleAxis 
               dataKey="subject" 
-              tick={{ fill: '#8B4513', fontSize: 12, fontWeight: 'bold' }} 
+              tick={{ fill: '#8B4513', fontSize: 9, fontWeight: 'bold' }} 
             />
             <PolarRadiusAxis 
               angle={30} 
@@ -57,9 +55,9 @@ const RadarChart: React.FC<Props> = ({ scores }) => {
               dataKey="A"
               stroke={THEME_GOLD}
               fill={THEME_GOLD}
-              fillOpacity={0.5}
-              animationBegin={200}
-              animationDuration={1000}
+              fillOpacity={0.4}
+              animationBegin={100}
+              animationDuration={800}
             />
           </RechartsRadarChart>
         </ResponsiveContainer>
