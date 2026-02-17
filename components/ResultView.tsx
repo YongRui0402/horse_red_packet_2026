@@ -145,20 +145,20 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
             {showCard && <RadarChart scores={result.scores} height={155} />}
           </div>
 
-          <div className="flex-1 space-y-5 py-1">
+          <div className="flex-1 space-y-6 py-1">
             {dimensionData.map((d) => (
-              <div key={d.key} className="flex flex-col relative">
+              <div key={d.key} className="flex flex-col border-b border-transparent pb-1">
                 <div className="flex justify-between items-center mb-0.5">
-                  <span className="text-[11px] font-black text-[#8B4513] shrink-0 leading-tight">{d.label}</span>
+                  <span className="text-[11px] font-black text-[#8B4513] shrink-0 leading-none">{d.label}</span>
                   <div className="flex-1 mx-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-[#B30000] to-[#FF5252]"
                       style={{ width: showCard ? `${d.score}%` : '0%', transition: 'width 1s ease-out' }}
                     />
                   </div>
-                  <span className="text-[11px] font-mono font-black text-[#B30000] shrink-0 w-6 text-right leading-tight">{Math.round(d.score)}</span>
+                  <span className="text-[11px] font-mono font-black text-[#B30000] shrink-0 w-6 text-right leading-none">{Math.round(d.score)}</span>
                 </div>
-                <div className="text-[10px] text-gray-400 font-serif italic leading-tight opacity-90 pl-0.5 truncate">
+                <div className="text-[9px] text-gray-400 font-serif italic leading-normal opacity-90 pl-0.5 truncate max-w-[150px]">
                   {d.comment}
                 </div>
               </div>
@@ -166,7 +166,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        <div className="w-full space-y-2 mt-2">
+        <div className="w-full space-y-2 mt-3">
           <div className="w-full bg-[#FFFBF0]/80 p-2.5 rounded-xl border border-[#C5A059]/10 italic text-center">
             <p className="text-[#5D4037] text-[12px] leading-tight font-serif px-1">
               「 {result.greeting.length > 45 ? result.greeting.substring(0, 45) + '...' : result.greeting} 」
@@ -181,7 +181,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE v1.0.6</div>
+        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE V1.0.7</div>
       </div>
 
       <div className="w-full max-w-[380px] space-y-2 mt-3 no-screenshot pb-8">
