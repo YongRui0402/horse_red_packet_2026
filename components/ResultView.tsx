@@ -12,6 +12,7 @@ interface Props {
 const ResultView: React.FC<Props> = ({ result, onBack }) => {
   const [showCard, setShowCard] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,12 +20,23 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleCloseWindow = () => {
+    setIsFinished(true);
+    // 嘗試關閉視窗 (部分行動裝置瀏覽器或 LINE WebView 支援)
+    window.close();
+    // 如果 window.close 被攔截，嘗試跳轉到空白頁或引導手動關閉
+    setTimeout(() => {
+      if (!window.closed) {
+        // 若無法關閉，則維持在「感謝參與」狀態
+      }
+    }, 500);
+  };
+
   const shareToLine = async () => {
     if (!cardRef.current || isSharing) return;
     
     setIsSharing(true);
     try {
-      const shareText = `🧧 2026 馬年 AI 鑑定報告！我抽到了 NT$ ${result.amount}！\n鑑定官說：「${result.comment.substring(0, 15)}...」快來挑戰你的含梗量！`;
       window.scrollTo(0, 0);
 
       const canvas = await html2canvas(cardRef.current, {
@@ -51,27 +63,28 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
       
+      // 行動裝置：優先使用系統分享 (純圖片，會彈出選擇視窗包含 LINE)
       if (blob && navigator.share && navigator.canShare) {
         const file = new File([blob], '2026-horse-card.png', { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
-            files: [file],
-            title: '2026 馬年專屬祝福卡',
-            text: shareText
+            files: [file]
           });
+          // 分享完成後，嘗試關閉網頁
+          handleCloseWindow();
           setIsSharing(false);
           return;
         }
       }
 
+      // 桌機或不支援環境：下載圖片後嘗試關閉
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `馬年專屬祝福卡-${result.nickname}.png`;
       link.href = dataUrl;
       link.click();
       
-      const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(shareText + '\n' + window.location.href)}`;
-      window.open(lineUrl, '_blank');
+      handleCloseWindow();
       
     } catch (err) {
       console.error('Sharing failed', err);
@@ -80,10 +93,27 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     }
   };
 
+  // 如果已經完成分享且無法關閉視窗，顯示感謝畫面
+  if (isFinished) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+        <div className="text-6xl mb-6">🧧</div>
+        <h2 className="text-2xl font-serif text-[#C5A059] mb-4">祝福已成功送出！</h2>
+        <p className="text-white/70 mb-8 leading-relaxed">
+          感謝您參與 2026 馬年 AI 紅包鑑定。<br/>
+          祝您龍馬精神，萬事如意！
+        </p>
+        <p className="text-[10px] text-white/30 uppercase tracking-widest">
+          您可以手動關閉此分頁或返回桌面
+        </p>
+      </div>
+    );
+  }
+
   const dimensionData = [
     { key: 'literary', label: '文采', score: result.scores.literary, comment: result.dimensionComments.literary },
     { key: 'blessing', label: '福氣', score: result.scores.blessing, comment: result.dimensionComments.blessing },
-    { key: 'wealth', label: '發財', score: result.scores.wealth, scoreValue: result.scores.wealth, comment: result.dimensionComments.wealth },
+    { key: 'wealth', label: '發財', score: result.scores.wealth, comment: result.dimensionComments.wealth },
     { key: 'puns', label: '諧音', score: result.scores.puns, comment: result.dimensionComments.puns },
     { key: 'relevance', label: '應景', score: result.scores.relevance, comment: result.dimensionComments.relevance },
     { key: 'memes', label: '迷因', score: result.scores.memes, comment: result.dimensionComments.memes },
@@ -98,7 +128,6 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
         }`}
         style={{ width: '380px' }}
       >
-        {/* Header Section */}
         <header className="text-center relative mb-2 w-full border-b border-dashed border-[#C5A059]/20 pb-2 flex flex-col items-center">
           <div className={`mb-1 text-[8px] font-black px-3 py-0.5 rounded-full ${result.isEasterEgg ? 'bg-red-600 text-white animate-pulse' : 'bg-gray-100 text-[#C5A059]'} italic uppercase tracking-[0.2em]`}>
             {result.isEasterEgg ? 'LEGENDARY STATUS' : 'AI VERIFIED CARD'}
@@ -108,7 +137,6 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </h3>
         </header>
 
-        {/* Reward Section */}
         <div className="text-center mb-2 bg-gradient-to-br from-red-50/50 to-white w-full py-1.5 rounded-[1.2rem] border border-red-50 flex items-center justify-around px-4">
           <span className="text-[10px] text-[#B30000] opacity-60 uppercase tracking-[0.2em] font-black">鑑定紅包賞金 / REWARD</span>
           <div className="flex items-baseline gap-1">
@@ -119,14 +147,11 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        {/* Main Content: Radar (Left) + Scores (Right) */}
         <div className="w-full flex gap-2 mb-2 items-center">
-          {/* Left Column: Radar Chart */}
           <div className="w-[160px] h-[160px] flex items-center justify-center bg-gray-50/20 rounded-xl border border-gray-50/50 overflow-hidden shrink-0">
             {showCard && <RadarChart scores={result.scores} height={155} />}
           </div>
 
-          {/* Right Column: Scores with Inline Comments */}
           <div className="flex-1 space-y-2 py-1">
             {dimensionData.map((d) => (
               <div key={d.key} className="flex flex-col">
@@ -148,7 +173,6 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        {/* Text Area */}
         <div className="w-full space-y-2">
           <div className="w-full bg-[#FFFBF0]/80 p-2.5 rounded-xl border border-[#C5A059]/10 italic text-center">
             <p className="text-[#5D4037] text-[12px] leading-tight font-serif px-1">
@@ -164,11 +188,9 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        {/* Footer info for card aesthetic */}
         <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE V1.2.3</div>
       </div>
 
-      {/* Action Buttons */}
       <div className="w-full max-w-[380px] space-y-2 mt-3 no-screenshot pb-8">
         <button
           onClick={shareToLine}
@@ -176,13 +198,13 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           className="w-full py-3.5 rounded-full bg-[#06C755] text-white font-black hover:brightness-105 transition flex items-center justify-center space-x-3 shadow-lg transform active:scale-[0.98]"
         >
           <span className="text-lg">🧧</span>
-          <span className="text-md tracking-[0.1em]">{isSharing ? '卡片製作中...' : '分享福卡至 LINE'}</span>
+          <span className="text-md tracking-[0.1em]">{isSharing ? '卡片製作中...' : '分享福卡並完成'}</span>
         </button>
         <button
           onClick={onBack}
           className="w-full py-2.5 rounded-full border border-white/20 text-white/70 text-xs font-black hover:bg-white/10 transition tracking-[0.2em] bg-transparent uppercase"
         >
-          返回首頁
+          返回修改
         </button>
       </div>
     </div>
