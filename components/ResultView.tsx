@@ -21,7 +21,6 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
   const handleCloseWindow = () => {
     setIsFinished(true);
-    // 優先嘗試跳轉到 LINE 的主分頁並請求關閉當前 WebView
     window.location.href = "line://"; 
     setTimeout(() => {
       window.close();
@@ -33,31 +32,38 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     
     setIsSharing(true);
     try {
+      // 確保視窗滾動到頂部，有助於 html2canvas 定位
       window.scrollTo(0, 0);
 
+      // 獲取當前卡片的實際滾動高度
+      const currentScrollHeight = cardRef.current.scrollHeight;
+
       const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
+        scale: 3, // 提高清晰度
         useCORS: true,
-        backgroundColor: '#B30000',
+        backgroundColor: '#B30000', // 背景色，避免透明漏光
         logging: false,
         width: 380,
-        // 這裡改為 null 或稍微加一點緩衝，但在 onclone 處理最保險
-        height: cardRef.current.scrollHeight + 20, 
+        // --- 關鍵修改 1: 大幅增加高度緩衝 ---
+        // 之前的 +20 可能不夠，增加到 +60 確保底部絕對不會被切到
+        height: currentScrollHeight + 60, 
+        // ----------------------------------
         onclone: (clonedDoc) => {
+          // 隱藏不需要截圖的按鈕
           const noScreenshotElems = clonedDoc.querySelectorAll('.no-screenshot');
           noScreenshotElems.forEach(el => (el as HTMLElement).style.display = 'none');
           
+          // 確保複製出來的卡片樣式是展開的
           const clonedCard = clonedDoc.querySelector('.result-card-container');
           if (clonedCard) {
             const cardEl = clonedCard as HTMLElement;
             cardEl.style.transform = 'none';
             cardEl.style.opacity = '1';
-            cardEl.style.margin = '0';
+            cardEl.style.margin = '0 auto'; // 居中以防萬一
             cardEl.style.width = '380px';
-            // --- 關鍵修正：強制高度自動延伸，避免文字被裁切 ---
+            // 強制高度自動延伸並允許溢出，配合上面的 height 緩衝
             cardEl.style.height = 'auto'; 
             cardEl.style.overflow = 'visible';
-            // ---------------------------------------------
           }
         }
       });
@@ -86,6 +92,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
       
     } catch (err) {
       console.error('Sharing failed', err);
+      alert('分享圖片生成失敗，請稍後再試。');
     } finally {
       setIsSharing(false);
     }
@@ -120,6 +127,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     <div className="w-full h-full flex flex-col items-center py-2 px-4 overflow-y-auto hide-scrollbar">
       <div 
         ref={cardRef}
+        // 注意：這裡保持 overflow-hidden 是為了圓角效果，但在 onclone 時我們會把它改成 visible
         className={`result-card-container bg-white rounded-[1.8rem] shadow-2xl p-4 transition-all duration-1000 ease-out border-[6px] border-[#C5A059] relative overflow-hidden flex flex-col items-center shrink-0 ${
           showCard ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-95'
         }`}
@@ -179,13 +187,13 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
           <div className={`w-full p-3 rounded-xl shadow-md relative border ${result.isEasterEgg ? 'bg-gradient-to-br from-[#2a0000] to-[#600000] border-yellow-500' : 'bg-[#1a0000] border-[#C5A059]/30'}`}>
             <div className="absolute top-1.5 left-4 text-[7px] font-black text-[#C5A059] opacity-70 uppercase tracking-[0.2em]">鑑定官結語 / Verdict</div>
-            {/* 修正重點：
-               1. 將 pt-2 改為 pt-5，避免文字頂到上方的標題
-               2. 加入 pb-1，確保下方文字不會貼底被裁切 
-            */}
-            <p className="text-[#FDF2F2] font-serif text-[13px] leading-relaxed pt-5 pb-1">
+            
+            {/* --- 關鍵修改 2: 增加底部內距 --- */}
+            {/* 將 pb-1 改為 pb-4，讓文字距離容器底部更遠一點，提供安全距離 */}
+            <p className="text-[#FDF2F2] font-serif text-[13px] leading-relaxed pt-5 pb-4">
               {result.comment}
             </p>
+            {/* ------------------------------- */}
           </div>
         </div>
 
