@@ -15,7 +15,8 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setTimeout(() => setShowCard(true), 300);
+    const timer = setTimeout(() => setShowCard(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const shareToLine = async () => {
@@ -23,17 +24,15 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     
     setIsSharing(true);
     try {
-      const shareText = `${result.nickname} 在 2026 馬年 AI 紅包獲得了 NT$ ${result.amount}！\n快來試試你的馬年手氣吧！`;
-      
-      // 確保畫面在頂部
+      const shareText = `🧧 2026 馬年 AI 鑑定報告！我抽到了 NT$ ${result.amount}！\n鑑定官說：「${result.comment.substring(0, 15)}...」快來挑戰你的含梗量！`;
       window.scrollTo(0, 0);
 
       const canvas = await html2canvas(cardRef.current, {
-        scale: 3, // 提高解析度
+        scale: 3,
         useCORS: true,
         backgroundColor: '#B30000',
         logging: false,
-        width: cardRef.current.scrollWidth,
+        width: 400,
         height: cardRef.current.scrollHeight,
         onclone: (clonedDoc) => {
           const noScreenshotElems = clonedDoc.querySelectorAll('.no-screenshot');
@@ -45,7 +44,6 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
             cardEl.style.transform = 'none';
             cardEl.style.opacity = '1';
             cardEl.style.margin = '0';
-            // 強制設定寬度確保佈局不崩潰
             cardEl.style.width = '400px'; 
           }
         }
@@ -54,11 +52,11 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
       
       if (blob && navigator.share && navigator.canShare) {
-        const file = new File([blob], '2026-horse-red-packet.png', { type: 'image/png' });
+        const file = new File([blob], '2026-horse-card.png', { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: '2026 馬年 AI 紅包福卡',
+            title: '2026 馬年專屬祝福卡',
             text: shareText
           });
           setIsSharing(false);
@@ -68,134 +66,122 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `馬年福卡-${result.nickname}.png`;
+      link.download = `馬年專屬祝福卡-${result.nickname}.png`;
       link.href = dataUrl;
       link.click();
-
+      
       const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(shareText + '\n' + window.location.href)}`;
       window.open(lineUrl, '_blank');
       
     } catch (err) {
       console.error('Sharing failed', err);
-      alert('製作圖片失敗，可能是瀏覽器限制，請嘗試手動截圖');
     } finally {
       setIsSharing(false);
     }
   };
 
+  const dimensionData = [
+    { key: 'literary', label: '文采', score: result.scores.literary, comment: result.dimensionComments.literary },
+    { key: 'blessing', label: '福氣', score: result.scores.blessing, comment: result.dimensionComments.blessing },
+    { key: 'wealth', label: '發財', score: result.scores.wealth, comment: result.dimensionComments.wealth },
+    { key: 'puns', label: '諧音', score: result.scores.puns, comment: result.dimensionComments.puns },
+    { key: 'relevance', label: '應景', score: result.scores.relevance, comment: result.dimensionComments.relevance },
+    { key: 'memes', label: '迷因', score: result.scores.memes, comment: result.dimensionComments.memes },
+  ];
+
   return (
     <div className="w-full max-w-lg relative flex flex-col items-center py-6 px-4">
-      {/* 真正要被截圖的卡片區域 */}
       <div 
         ref={cardRef}
-        className={`result-card-container bg-white rounded-2xl shadow-2xl p-6 transition-all duration-1000 ease-out border-[8px] border-[#C5A059] relative overflow-hidden ${
+        className={`result-card-container bg-white rounded-[2.5rem] shadow-2xl p-6 transition-all duration-1000 ease-out border-[10px] border-[#C5A059] relative overflow-hidden flex flex-col items-center ${
           showCard ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-20 opacity-0 scale-95'
         }`}
-        style={{ width: '400px' }} // 固定寬度有利於 html2canvas 計算
+        style={{ width: '400px' }}
       >
-        <div className="flex flex-col items-center">
-          {/* Header Section */}
-          <div className="text-center relative mb-6 w-full">
-            <div className="absolute -top-1 left-2 text-[#B30000] opacity-10 text-5xl pointer-events-none">🧧</div>
-            <h3 className="text-[#B30000] font-serif text-2xl font-bold tracking-widest flex items-center justify-center gap-2 flex-wrap">
-              <span className="text-red-700">{result.nickname}</span> 的專屬福卡
-            </h3>
-            <p className="text-gray-400 font-serif text-[11px] mt-2 tracking-widest">2026 丙午年 · 智慧紅包鑑定</p>
-            <div className="w-32 h-px bg-gradient-to-r from-transparent via-[#C5A059] to-transparent mx-auto mt-4"></div>
+        {/* Header Section */}
+        <header className="text-center relative mb-4 w-full border-b-2 border-dashed border-[#C5A059]/20 pb-4 flex flex-col items-center">
+          <div className={`mb-3 text-[9px] font-black px-4 py-1 rounded-full ${result.isEasterEgg ? 'bg-red-600 text-white animate-pulse shadow-lg' : 'bg-gray-100 text-[#C5A059]'} italic uppercase tracking-widest`}>
+            {result.isEasterEgg ? 'LEGENDARY STATUS' : 'AI VERIFIED CARD'}
           </div>
+          <h3 className="text-[#B30000] font-serif text-2xl font-black tracking-widest px-4 leading-tight">
+            <span className="text-red-700">{result.nickname}</span> 的專屬祝福卡
+          </h3>
+          <p className="text-gray-400 font-serif text-[10px] mt-1 tracking-[0.3em] uppercase">2026 丙午年 · 智慧鑑定結果</p>
+        </header>
 
-          {/* Blessing Content Box */}
-          <div className="w-full bg-[#FFFBF0] p-6 rounded-xl border border-[#C5A059]/20 italic text-center relative shadow-inner mb-6">
-            <span className="absolute top-2 left-4 text-4xl text-[#C5A059] opacity-30 font-serif">“</span>
-            <p className="text-[#5D4037] text-lg leading-relaxed font-serif px-2 py-2 break-words">
-              {result.greeting}
-            </p>
-            <span className="absolute bottom-1 right-4 text-4xl text-[#C5A059] opacity-30 font-serif">”</span>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 bg-white rotate-45 border-r border-b border-[#C5A059]/20"></div>
+        {/* Amount Section */}
+        <div className="text-center mb-6 bg-gradient-to-br from-red-50 to-white w-full py-5 rounded-[2rem] border border-red-100 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-red-100/20 rounded-full -mr-12 -mt-12"></div>
+          <span className="text-[10px] text-[#B30000] opacity-60 uppercase tracking-[0.5em] block mb-1 font-black">鑑定紅包賞金 / REWARD</span>
+          <div className="flex items-baseline justify-center gap-1">
+             <span className="text-3xl font-serif text-[#B30000] font-bold">NT$</span>
+             <span className="text-7xl font-black text-[#B30000] tabular-nums drop-shadow-sm tracking-tighter">
+               {result.amount.toLocaleString()}
+             </span>
           </div>
+        </div>
 
-          {/* Amount Section */}
-          <div className="text-center mb-6">
-            <span className="text-[11px] text-gray-400 uppercase tracking-[0.4em] font-bold block mb-2">獲得開春紅包</span>
-            <div className="flex items-baseline justify-center gap-1">
-               <span className="text-3xl font-serif text-[#B30000] font-bold">NT$</span>
-               <span className="text-7xl font-black text-[#B30000] tracking-tighter drop-shadow-sm tabular-nums">
-                 {result.amount.toLocaleString()}
-               </span>
-            </div>
-          </div>
+        {/* Greeting Section */}
+        <div className="w-full bg-[#FFFBF0] p-5 rounded-[1.5rem] border border-[#C5A059]/20 italic text-center relative shadow-inner mb-6 min-h-[80px] flex items-center justify-center">
+          <p className="text-[#5D4037] text-md leading-relaxed font-serif break-words px-1">
+            「 {result.greeting} 」
+          </p>
+        </div>
 
-          {/* Radar Chart Section */}
-          <div className="w-full bg-gray-50/30 rounded-2xl p-2 border border-gray-100 mb-6 flex justify-center">
-            <RadarChart scores={result.scores} />
-          </div>
+        {/* Radar Chart Section */}
+        <div className="w-full bg-gray-50/80 rounded-[2rem] p-2 border border-gray-100 mb-6 relative">
+          <div className="absolute top-3 left-4 z-10 text-[9px] font-black text-[#8B4513] opacity-30 uppercase tracking-widest">能力圖譜 / Stats</div>
+          {showCard && <RadarChart scores={result.scores} />}
+        </div>
 
-          {/* Dimension Scores Table - 補齊五個維度 */}
-          <div className="w-full space-y-3 mb-8 px-2">
-            {[
-              { label: '文采', score: result.scores.literary, comment: result.dimensionComments.literary },
-              { label: '應景', score: result.scores.relevance, comment: result.dimensionComments.relevance },
-              { label: '情緒', score: result.scores.emotion, comment: result.dimensionComments.emotion },
-              { label: '發財', score: result.scores.wealth, comment: result.dimensionComments.wealth },
-              { label: '福氣', score: result.scores.blessing, comment: result.dimensionComments.blessing },
-            ].map((d) => (
-              <div key={d.label} className="flex items-start gap-3">
-                <span className="font-bold text-[#8B4513] text-sm w-10 mt-1 flex-shrink-0">{d.label}</span>
-                <div className="bg-[#FDF2F2] px-2 py-1 rounded-lg min-w-[40px] text-center border border-red-100 flex-shrink-0">
-                  <span className="text-[#B30000] font-mono font-bold text-sm">{d.score}</span>
-                </div>
-                {/* 移除 truncate，改用 break-words 並向右對齊，確保文字完整 */}
-                <span className="flex-1 text-gray-500 text-[11px] italic leading-tight text-right break-words pt-1">
-                  {d.comment}
-                </span>
+        {/* Dimension Details Section */}
+        <div className="w-full grid grid-cols-2 gap-x-4 gap-y-3 mb-8 px-2">
+          {dimensionData.map((d) => (
+            <div key={d.key} className="flex flex-col">
+              <div className="flex justify-between items-center mb-0.5">
+                <span className="text-[10px] font-black text-[#8B4513] opacity-70">{d.label}</span>
+                <span className="text-[11px] font-mono font-bold text-[#B30000]">{d.score}</span>
               </div>
-            ))}
-          </div>
+              <div className="h-1 bg-gray-200 rounded-full overflow-hidden mb-1">
+                <div 
+                  className="h-full bg-gradient-to-r from-[#B30000] to-[#FF5252] transition-all duration-1000"
+                  style={{ width: showCard ? `${d.score}%` : '0%' }}
+                />
+              </div>
+              <p className="text-[9px] text-gray-400 italic truncate" title={d.comment}>
+                {d.comment.split('，')[0]}
+              </p>
+            </div>
+          ))}
+        </div>
 
-          {/* AI Conclusion Box */}
-          <div className="bg-[#990000] text-white p-5 w-full rounded-xl shadow-lg relative border-b-4 border-black/20">
-            <div className="absolute top-2 right-4 text-[10px] font-bold tracking-tighter opacity-40 uppercase">AI 總結</div>
-            <p className="text-[#FDF2F2] italic text-sm leading-relaxed font-serif">
-              「{result.comment}」
-            </p>
-          </div>
+        {/* Verdict Section */}
+        <div className={`w-full p-5 rounded-[2rem] shadow-xl relative overflow-hidden border ${result.isEasterEgg ? 'bg-gradient-to-br from-[#2a0000] to-[#600000] border-yellow-500' : 'bg-[#1a0000] border-[#C5A059]/30'}`}>
+          <div className="absolute -bottom-2 -right-4 opacity-10 text-7xl transform rotate-12">🐎</div>
+          <div className="absolute top-3 left-5 text-[9px] font-black text-[#C5A059] uppercase tracking-[0.4em]">鑑定官結語 / Verdict</div>
+          <p className="text-[#FDF2F2] font-serif text-[15px] leading-relaxed pt-3 relative z-10">
+            {result.comment}
+          </p>
+        </div>
 
-          {/* Action Buttons (不截圖) */}
-          <div className="w-full space-y-3 no-screenshot pt-10">
-            <button
-              onClick={shareToLine}
-              disabled={isSharing}
-              className="w-full py-4 rounded-full bg-[#06C755] text-white font-bold hover:brightness-105 transition flex items-center justify-center space-x-3 shadow-xl transform active:scale-[0.98]"
-            >
-              <span className="text-2xl">📱</span>
-              <span className="tracking-widest text-lg">{isSharing ? '正在製作福卡...' : '分享福卡至 LINE'}</span>
-            </button>
-            <button
-              onClick={onBack}
-              className="w-full py-3 rounded-full border-2 border-gray-300 text-gray-500 text-sm font-bold hover:bg-gray-50 transition tracking-widest bg-white/50"
-            >
-              返回首頁
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="w-full space-y-3 no-screenshot pt-10">
+          <button
+            onClick={shareToLine}
+            disabled={isSharing}
+            className="w-full py-5 rounded-full bg-[#06C755] text-white font-black hover:brightness-105 transition flex items-center justify-center space-x-3 shadow-xl transform active:scale-[0.98] text-lg"
+          >
+            <span className="text-2xl">🧧</span>
+            <span className="tracking-[0.2em]">{isSharing ? '卡片製作中...' : '分享福卡至 LINE'}</span>
+          </button>
+          <button
+            onClick={onBack}
+            className="w-full py-4 rounded-full border-2 border-gray-100 text-gray-400 text-sm font-black hover:bg-gray-50 transition tracking-[0.3em] bg-white/50 uppercase"
+          >
+            返回首頁
+          </button>
         </div>
       </div>
-
-      {result.isEasterEgg && (
-        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden">
-           <div className="animate-confetti">🐎 🧧 ✨ 💰 🏮</div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes confetti {
-          0% { transform: translateY(-100vh) rotate(0); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-        .animate-confetti {
-          animation: confetti 4s ease-out infinite;
-          font-size: 2.5rem;
-        }
-      `}</style>
     </div>
   );
 };

@@ -9,12 +9,10 @@ const App: React.FC = () => {
   const [stage, setStage] = useState<AppStage>(AppStage.HOME);
   const [result, setResult] = useState<ResultData | null>(null);
   const [wallItems, setWallItems] = useState<WallItem[]>([]);
-  // 初始值設為 0
   const [stats, setStats] = useState({ totalAmount: 0, totalCount: 0 });
   const [loading, setLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
-  // 初始化載入「雲端」資料
   useEffect(() => {
     const fetchCloudData = async () => {
       if (stage !== AppStage.HOME) return;
@@ -22,10 +20,6 @@ const App: React.FC = () => {
       setLoading(true);
       setIsError(false);
       try {
-        if (!databaseService) {
-          throw new Error("Cloud Database Service Unavailable");
-        }
-
         const [items, currentStats] = await Promise.all([
           databaseService.getWallItems(),
           databaseService.getStats()
@@ -55,13 +49,12 @@ const App: React.FC = () => {
       id: Date.now().toString(),
       greeting: data.greeting,
       amount: data.amount,
-      userName: data.nickname || '匿名馬迷'
+      userName: data.nickname || '匿名馬迷',
+      comment: data.comment
     };
 
     try {
-      if (databaseService && typeof databaseService.saveWallItem === 'function') {
-        await databaseService.saveWallItem(newItem);
-      }
+      await databaseService.saveWallItem(newItem);
     } catch (err) {
       console.error("Failed to sync result to cloud:", err);
     }
@@ -70,27 +63,37 @@ const App: React.FC = () => {
   const handleBackHome = () => {
     setStage(AppStage.HOME);
     setResult(null);
-    window.scrollTo(0, 0);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center">
-      {stage === AppStage.HOME && (
-        <HomeView 
-          onStart={handleStart} 
-          wallItems={wallItems} 
-          stats={stats} 
-          isLoading={loading}
-          isError={isError}
-        />
-      )}
-      <div className="p-4 w-full flex flex-col items-center justify-center">
-        {stage === AppStage.SCORING && (
-          <ScoringView onComplete={handleResult} onCancel={handleBackHome} />
+    <div className="fixed inset-0 w-full flex justify-center items-center bg-[#2A0000] overflow-hidden">
+      {/* 桌機版背景：深度裝飾紋理 */}
+      <div className="absolute inset-0 opacity-40 pointer-events-none imperial-texture bg-repeat opacity-20" style={{backgroundImage: 'url("https://www.transparenttextures.com/patterns/black-leather.png")'}}></div>
+      
+      {/* 全域 App 容器：使用 dvh 解決手機瀏覽器高度問題 */}
+      <div className="w-full max-w-[500px] h-[100dvh] flex flex-col bg-[#B30000] relative shadow-[0_0_120px_rgba(0,0,0,1)] overflow-hidden z-10">
+        {stage === AppStage.HOME && (
+          <HomeView 
+            onStart={handleStart} 
+            wallItems={wallItems} 
+            stats={stats} 
+            isLoading={loading}
+            isError={isError}
+          />
         )}
-        {stage === AppStage.RESULT && result && (
-          <ResultView result={result} onBack={handleBackHome} />
-        )}
+        
+        <div className="flex-1 overflow-y-auto w-full flex flex-col items-center">
+          {stage === AppStage.SCORING && (
+            <div className="p-6 w-full flex-1 flex flex-col justify-center">
+              <ScoringView onComplete={handleResult} onCancel={handleBackHome} />
+            </div>
+          )}
+          {stage === AppStage.RESULT && result && (
+            <div className="w-full py-4">
+              <ResultView result={result} onBack={handleBackHome} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

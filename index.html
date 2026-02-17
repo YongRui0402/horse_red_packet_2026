@@ -22,21 +22,34 @@
             background-image: radial-gradient(circle at center, #c20000 0%, #b30000 100%);
             background-attachment: fixed;
         }
-        .ornate-border {
-            border: 2px solid #C5A059;
-            position: relative;
+        
+        /* 掉落動畫：從目前的旋轉角度開始，向上彈一下再加速下墜 */
+        @keyframes fall {
+            0% { 
+                transform: translate3d(0, 0, 0) rotate(var(--initial-rotate, 0deg)) scale(1);
+                opacity: 1; 
+            }
+            20% { 
+                transform: translate3d(0, -20px, 0) rotate(calc(var(--initial-rotate, 0deg) + 5deg)) scale(1.05);
+            }
+            100% { 
+                transform: translate3d(0, 800px, 0) rotate(calc(var(--initial-rotate, 0deg) - 40deg)) scale(0.5);
+                opacity: 0; 
+            }
         }
-        .ornate-border::before, .ornate-border::after, .ornate-corner-bl, .ornate-corner-br {
-            content: '✦';
-            position: absolute;
-            color: #C5A059;
-            font-size: 12px;
-            z-index: 10;
+        .animate-fall {
+            animation: fall 0.8s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important;
+            pointer-events: none !important;
+            z-index: 99999 !important;
         }
-        .ornate-corner-tl { top: -8px; left: -6px; position: absolute; }
-        .ornate-corner-tr { top: -8px; right: -6px; position: absolute; }
-        .ornate-corner-bl { bottom: -12px; left: -6px; position: absolute; }
-        .ornate-corner-br { bottom: -12px; right: -6px; position: absolute; }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
         @keyframes scrollList {
             0% { transform: translateY(0); }
@@ -50,6 +63,13 @@
         }
         .gold-gradient {
             background: linear-gradient(135deg, #C5A059 0%, #E2C98C 50%, #C5A059 100%);
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+        @keyframes shake {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
         }
     </style>
 <script type="importmap">
