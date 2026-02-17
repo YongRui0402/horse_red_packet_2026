@@ -22,12 +22,10 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
   const handleCloseWindow = () => {
     setIsFinished(true);
-    // 嘗試關閉視窗 (部分行動裝置瀏覽器或 LINE WebView 支援)
     window.close();
-    // 如果 window.close 被攔截，嘗試跳轉到空白頁或引導手動關閉
     setTimeout(() => {
       if (!window.closed) {
-        // 若無法關閉，則維持在「感謝參與」狀態
+        // Fallback handled by rendering isFinished view
       }
     }, 500);
   };
@@ -63,21 +61,18 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
       
-      // 行動裝置：優先使用系統分享 (純圖片，會彈出選擇視窗包含 LINE)
       if (blob && navigator.share && navigator.canShare) {
         const file = new File([blob], '2026-horse-card.png', { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file]
           });
-          // 分享完成後，嘗試關閉網頁
           handleCloseWindow();
           setIsSharing(false);
           return;
         }
       }
 
-      // 桌機或不支援環境：下載圖片後嘗試關閉
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `馬年專屬祝福卡-${result.nickname}.png`;
@@ -93,7 +88,6 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     }
   };
 
-  // 如果已經完成分享且無法關閉視窗，顯示感謝畫面
   if (isFinished) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
@@ -152,20 +146,20 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
             {showCard && <RadarChart scores={result.scores} height={155} />}
           </div>
 
-          <div className="flex-1 space-y-2 py-1">
+          <div className="flex-1 space-y-2.5 py-1">
             {dimensionData.map((d) => (
               <div key={d.key} className="flex flex-col">
-                <div className="flex justify-between items-center h-4">
-                  <span className="text-[11px] font-black text-[#8B4513] shrink-0">{d.label}</span>
-                  <div className="flex-1 mx-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="text-[11px] font-black text-[#8B4513] shrink-0 leading-none">{d.label}</span>
+                  <div className="flex-1 mx-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-[#B30000] to-[#FF5252]"
                       style={{ width: showCard ? `${d.score}%` : '0%', transition: 'width 1s ease-out' }}
                     />
                   </div>
-                  <span className="text-[11px] font-mono font-black text-[#B30000] shrink-0 w-5 text-right">{Math.round(d.score)}</span>
+                  <span className="text-[11px] font-mono font-black text-[#B30000] shrink-0 w-6 text-right leading-none">{Math.round(d.score)}</span>
                 </div>
-                <div className="text-[9px] text-gray-500 font-serif italic leading-none truncate opacity-80 pl-0.5 mt-0.5">
+                <div className="text-[9.5px] text-gray-400 font-serif italic leading-tight truncate opacity-90 pl-0.5">
                   {d.comment}
                 </div>
               </div>
