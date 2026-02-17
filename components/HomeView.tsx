@@ -203,7 +203,6 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
   const handlePointerDown = (e: React.PointerEvent) => {
     if (isFalling) return;
     
-    // 即使在 isZoomed 也要捕捉 PointerDown，才能觸發後續的點擊/縮小邏輯
     hasMovedRef.current = false;
 
     if (!isZoomed && containerRef.current) {
@@ -219,19 +218,19 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
         itemY: item.y 
       };
       onUpdatePos(item.x, item.y, true);
+      // 使用 currentTarget 確保 capture 綁定在便利貼本身
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     }
-    
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    // 縮放狀態下不執行拖拉位置更新
     if (!isDragging || isZoomed) return;
     
     const dx_px = e.clientX - dragStartPos.current.x;
     const dy_px = e.clientY - dragStartPos.current.y;
     
-    if (Math.abs(dx_px) > 3 || Math.abs(dy_px) > 3) {
+    // 增加位移判定敏感度
+    if (Math.abs(dx_px) > 2 || Math.abs(dy_px) > 2) {
       hasMovedRef.current = true;
     }
     
@@ -246,19 +245,18 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    setIsDragging(false);
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    if (isDragging) {
+      setIsDragging(false);
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    }
 
-    // 只要沒有顯著移動（無論是否縮放），都走點擊偵測邏輯
     if (!hasMovedRef.current) {
       const now = Date.now();
       if (now - lastClickTime.current < 300) {
-        // 雙擊：掉落
         if (clickTimer.current) clearTimeout(clickTimer.current);
         setIsFalling(true);
         setTimeout(onDrop, 800);
       } else {
-        // 單擊：切換縮放 (放大或縮小)
         clickTimer.current = window.setTimeout(() => onZoom(), 250);
       }
       lastClickTime.current = now;
@@ -277,7 +275,8 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
     boxShadow: '0 60px 120px -30px rgba(0,0,0,0.8)',
     borderRadius: '2rem',
     padding: '1.5rem',
-    transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+    transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    touchAction: 'none'
   } : {
     position: 'absolute',
     left: `${item.x}%`,
@@ -290,7 +289,8 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
     backgroundColor: item.color,
     willChange: 'transform, left, top',
     transition: isDragging ? 'none' : 'transform 0.3s ease-out, box-shadow 0.2s ease',
-    boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.3)' : '0 4px 10px rgba(0,0,0,0.1)'
+    boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.3)' : '0 4px 10px rgba(0,0,0,0.1)',
+    touchAction: 'none' // CRITICAL: 防止手機端拖拽時觸發原生捲動或重新整理
   };
 
   return (
