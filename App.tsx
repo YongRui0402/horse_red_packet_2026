@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppStage, ResultData, WallItem } from './types';
 import { databaseService } from './services/databaseService';
@@ -67,10 +68,10 @@ const App: React.FC = () => {
 
   return (
     <div className="fixed inset-0 w-full flex justify-center items-center bg-[#2A0000] overflow-hidden">
-      {/* 桌機版背景：深度裝飾紋理 */}
-      <div className="absolute inset-0 opacity-40 pointer-events-none imperial-texture bg-repeat opacity-20" style={{backgroundImage: 'url("https://www.transparenttextures.com/patterns/black-leather.png")'}}></div>
+      {/* 移除 404 圖片，改用純 CSS 裝飾紋理 */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
       
-      {/* 全域 App 容器：使用 dvh 解決手機瀏覽器高度問題 */}
+      {/* 全域 App 容器 */}
       <div className="w-full max-w-[500px] h-[100dvh] flex flex-col bg-[#B30000] relative shadow-[0_0_120px_rgba(0,0,0,1)] overflow-hidden z-10">
         {stage === AppStage.HOME && (
           <HomeView 

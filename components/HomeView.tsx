@@ -25,7 +25,7 @@ const STICKY_COLORS = [
   '#FFF9C4', '#F8BBD0', '#C8E6C9', '#B3E5FC', '#FFE0B2', '#F3E5F5',
 ];
 
-const APP_VERSION = "v1.1.1";
+const APP_VERSION = "v1.1.2";
 const MAX_ON_SCREEN = 6;
 
 const GRID_COLS = 4;
@@ -46,21 +46,26 @@ const HomeView: React.FC<Props> = ({ onStart, wallItems, stats, isLoading, isErr
   const topZIndex = useRef(100);
 
   useEffect(() => {
+    // 當 wallItems 變動且畫面上便利貼不足時，執行隨機補充
     if (wallItems.length > 0 && stickies.length < MAX_ON_SCREEN) {
       const existingIds = new Set(stickies.map(s => s.id));
       const occupiedGrids = new Set(stickies.map(s => s.gridIndex));
-      const availableItems = wallItems.filter(w => !existingIds.has(w.id));
+      
+      // 先過濾掉目前已在畫面上的 items，再隨機排序 (Shuffle)
+      const availableItems = wallItems
+        .filter(w => !existingIds.has(w.id))
+        .sort(() => Math.random() - 0.5);
       
       if (availableItems.length > 0) {
-        const needed = MAX_ON_SCREEN - stickies.length;
+        const needed = Math.min(MAX_ON_SCREEN - stickies.length, availableItems.length);
         const availableGrids = GRID_CELLS.map((_, i) => i).filter(i => !occupiedGrids.has(i));
         const shuffledGrids = [...availableGrids].sort(() => Math.random() - 0.5);
         
         const toAdd = availableItems.slice(0, needed).map((item, index) => {
           const gridIdx = shuffledGrids[index % shuffledGrids.length];
           const cell = GRID_CELLS[gridIdx];
-          const x = cell.x + (Math.random() * 12 - 6);
-          const y = cell.y + (Math.random() * 12 - 6);
+          const x = cell.x + (Math.random() * 10 - 5);
+          const y = cell.y + (Math.random() * 10 - 5);
 
           return {
             ...item,
