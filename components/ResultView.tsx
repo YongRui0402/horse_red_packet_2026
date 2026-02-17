@@ -182,7 +182,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE V1.2.3</div>
+        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE v1.0.4</div>
       </div>
 
       <div className="w-full max-w-[380px] space-y-2 mt-3 no-screenshot pb-8">
