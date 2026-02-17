@@ -3,12 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { WallItem } from '../types';
 
 const SUPABASE_URL = 'https://hkldokysyknysyzsoxrn.supabase.co';
-// 使用使用者提供的最新 Key
 const SUPABASE_KEY = 'sb_publishable_dZRbolbFxk37XdYIjgh6BA_nrSfUqa9';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 基礎數值設定為 0，確保完全顯示真實數據
 const BASE_AMOUNT = 0;
 const BASE_COUNT = 0;
 
@@ -19,19 +17,17 @@ export const databaseService = {
         .from('red_packet_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(50);
 
       if (error) throw error;
 
-      const onlineItems: WallItem[] = (data || []).map(row => ({
-        id: String(row.id || Date.now()),
+      return (data || []).map(row => ({
+        id: String(row.id),
         userName: row.user_name || '匿名馬迷',
         greeting: row.greeting || '',
-        amount: Number(row.amount || 0)
+        amount: Number(row.amount || 0),
+        comment: row.comment || null 
       }));
-
-      // 只回傳真實數據，不加入任何假資料
-      return onlineItems;
     } catch (err) {
       console.error('Fetch WallItems failed:', err);
       return [];
@@ -45,13 +41,34 @@ export const databaseService = {
         .insert([{
           user_name: item.userName,
           greeting: item.greeting,
-          amount: item.amount
+          amount: item.amount,
+          comment: item.comment 
         }]);
 
       if (error) throw error;
     } catch (err) {
       console.error('Save WallItem failed:', err);
       throw err;
+    }
+  },
+
+  updateWallItemComment: async (id: string, comment: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('red_packet_logs')
+        .update({ comment })
+        .eq('id', id);
+
+      if (error) {
+        if (error.code === 'PGRST204') {
+          console.error("資料庫缺少 'comment' 欄位，請前往 SQL Editor 執行 ALTER TABLE 指令。");
+        }
+        throw error;
+      }
+      return true;
+    } catch (err) {
+      console.error('Update WallItem Comment failed:', err);
+      return false;
     }
   },
 
