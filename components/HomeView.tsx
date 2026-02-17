@@ -25,7 +25,7 @@ const STICKY_COLORS = [
   '#FFF9C4', '#F8BBD0', '#C8E6C9', '#B3E5FC', '#FFE0B2', '#F3E5F5',
 ];
 
-const APP_VERSION = "v1.0.9";
+const APP_VERSION = "v1.1.1";
 const MAX_ON_SCREEN = 6;
 
 const GRID_COLS = 4;
