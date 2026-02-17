@@ -25,7 +25,7 @@ const STICKY_COLORS = [
   '#FFF9C4', '#F8BBD0', '#C8E6C9', '#B3E5FC', '#FFE0B2', '#F3E5F5',
 ];
 
-const APP_VERSION = "v1.0.8";
+const APP_VERSION = "v1.0.9";
 const MAX_ON_SCREEN = 6;
 
 const GRID_COLS = 4;
@@ -218,7 +218,6 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
         itemY: item.y 
       };
       onUpdatePos(item.x, item.y, true);
-      // 使用 currentTarget 確保 capture 綁定在便利貼本身
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     }
   };
@@ -229,7 +228,6 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
     const dx_px = e.clientX - dragStartPos.current.x;
     const dy_px = e.clientY - dragStartPos.current.y;
     
-    // 增加位移判定敏感度
     if (Math.abs(dx_px) > 2 || Math.abs(dy_px) > 2) {
       hasMovedRef.current = true;
     }
@@ -290,7 +288,7 @@ const StickyNote: React.FC<StickyProps> = ({ item, containerRef, onDrop, onUpdat
     willChange: 'transform, left, top',
     transition: isDragging ? 'none' : 'transform 0.3s ease-out, box-shadow 0.2s ease',
     boxShadow: isDragging ? '0 20px 40px rgba(0,0,0,0.3)' : '0 4px 10px rgba(0,0,0,0.1)',
-    touchAction: 'none' // CRITICAL: 防止手機端拖拽時觸發原生捲動或重新整理
+    touchAction: 'none'
   };
 
   return (
