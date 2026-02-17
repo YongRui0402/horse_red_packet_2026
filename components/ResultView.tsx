@@ -145,9 +145,9 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
             {showCard && <RadarChart scores={result.scores} height={155} />}
           </div>
 
-          <div className="flex-1 space-y-3.5 py-1">
+          <div className="flex-1 space-y-5 py-1">
             {dimensionData.map((d) => (
-              <div key={d.key} className="flex flex-col relative h-6">
+              <div key={d.key} className="flex flex-col relative">
                 <div className="flex justify-between items-center mb-0.5">
                   <span className="text-[11px] font-black text-[#8B4513] shrink-0 leading-tight">{d.label}</span>
                   <div className="flex-1 mx-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -166,7 +166,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        <div className="w-full space-y-2 mt-1">
+        <div className="w-full space-y-2 mt-2">
           <div className="w-full bg-[#FFFBF0]/80 p-2.5 rounded-xl border border-[#C5A059]/10 italic text-center">
             <p className="text-[#5D4037] text-[12px] leading-tight font-serif px-1">
               「 {result.greeting.length > 45 ? result.greeting.substring(0, 45) + '...' : result.greeting} 」
@@ -181,7 +181,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE v1.0.5</div>
+        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE v1.0.6</div>
       </div>
 
       <div className="w-full max-w-[380px] space-y-2 mt-3 no-screenshot pb-8">
