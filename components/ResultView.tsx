@@ -22,12 +22,11 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
   const handleCloseWindow = () => {
     setIsFinished(true);
-    window.close();
+    // 優先嘗試跳轉到 LINE 的主分頁並請求關閉當前 WebView
+    window.location.href = "line://"; 
     setTimeout(() => {
-      if (!window.closed) {
-        // Fallback handled by rendering isFinished view
-      }
-    }, 500);
+      window.close();
+    }, 200);
   };
 
   const shareToLine = async () => {
@@ -98,7 +97,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           祝您龍馬精神，萬事如意！
         </p>
         <p className="text-[10px] text-white/30 uppercase tracking-widest">
-          您可以手動關閉此分頁或返回桌面
+          正在引導您回到通訊應用程式...
         </p>
       </div>
     );
@@ -146,20 +145,20 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
             {showCard && <RadarChart scores={result.scores} height={155} />}
           </div>
 
-          <div className="flex-1 space-y-2.5 py-1">
+          <div className="flex-1 space-y-3.5 py-1">
             {dimensionData.map((d) => (
-              <div key={d.key} className="flex flex-col">
+              <div key={d.key} className="flex flex-col relative h-6">
                 <div className="flex justify-between items-center mb-0.5">
-                  <span className="text-[11px] font-black text-[#8B4513] shrink-0 leading-none">{d.label}</span>
+                  <span className="text-[11px] font-black text-[#8B4513] shrink-0 leading-tight">{d.label}</span>
                   <div className="flex-1 mx-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-[#B30000] to-[#FF5252]"
                       style={{ width: showCard ? `${d.score}%` : '0%', transition: 'width 1s ease-out' }}
                     />
                   </div>
-                  <span className="text-[11px] font-mono font-black text-[#B30000] shrink-0 w-6 text-right leading-none">{Math.round(d.score)}</span>
+                  <span className="text-[11px] font-mono font-black text-[#B30000] shrink-0 w-6 text-right leading-tight">{Math.round(d.score)}</span>
                 </div>
-                <div className="text-[9.5px] text-gray-400 font-serif italic leading-tight truncate opacity-90 pl-0.5">
+                <div className="text-[10px] text-gray-400 font-serif italic leading-tight opacity-90 pl-0.5 truncate">
                   {d.comment}
                 </div>
               </div>
@@ -167,7 +166,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        <div className="w-full space-y-2">
+        <div className="w-full space-y-2 mt-1">
           <div className="w-full bg-[#FFFBF0]/80 p-2.5 rounded-xl border border-[#C5A059]/10 italic text-center">
             <p className="text-[#5D4037] text-[12px] leading-tight font-serif px-1">
               「 {result.greeting.length > 45 ? result.greeting.substring(0, 45) + '...' : result.greeting} 」
@@ -182,7 +181,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           </div>
         </div>
 
-        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE v1.0.4</div>
+        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE v1.0.5</div>
       </div>
 
       <div className="w-full max-w-[380px] space-y-2 mt-3 no-screenshot pb-8">
@@ -192,7 +191,7 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
           className="w-full py-3.5 rounded-full bg-[#06C755] text-white font-black hover:brightness-105 transition flex items-center justify-center space-x-3 shadow-lg transform active:scale-[0.98]"
         >
           <span className="text-lg">🧧</span>
-          <span className="text-md tracking-[0.1em]">{isSharing ? '卡片製作中...' : '分享福卡並完成'}</span>
+          <span className="text-md tracking-[0.1em]">{isSharing ? '卡片製作中...' : '分享福卡後關閉'}</span>
         </button>
         <button
           onClick={onBack}
