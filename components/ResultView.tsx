@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { ResultData } from '../types';
 import RadarChart from './RadarChart';
@@ -42,7 +41,8 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
         backgroundColor: '#B30000',
         logging: false,
         width: 380,
-        height: cardRef.current.scrollHeight,
+        // 這裡改為 null 或稍微加一點緩衝，但在 onclone 處理最保險
+        height: cardRef.current.scrollHeight + 20, 
         onclone: (clonedDoc) => {
           const noScreenshotElems = clonedDoc.querySelectorAll('.no-screenshot');
           noScreenshotElems.forEach(el => (el as HTMLElement).style.display = 'none');
@@ -53,7 +53,11 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
             cardEl.style.transform = 'none';
             cardEl.style.opacity = '1';
             cardEl.style.margin = '0';
-            cardEl.style.width = '380px'; 
+            cardEl.style.width = '380px';
+            // --- 關鍵修正：強制高度自動延伸，避免文字被裁切 ---
+            cardEl.style.height = 'auto'; 
+            cardEl.style.overflow = 'visible';
+            // ---------------------------------------------
           }
         }
       });
@@ -175,13 +179,17 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
 
           <div className={`w-full p-3 rounded-xl shadow-md relative border ${result.isEasterEgg ? 'bg-gradient-to-br from-[#2a0000] to-[#600000] border-yellow-500' : 'bg-[#1a0000] border-[#C5A059]/30'}`}>
             <div className="absolute top-1.5 left-4 text-[7px] font-black text-[#C5A059] opacity-70 uppercase tracking-[0.2em]">鑑定官結語 / Verdict</div>
-            <p className="text-[#FDF2F2] font-serif text-[13px] leading-relaxed pt-2">
+            {/* 修正重點：
+               1. 將 pt-2 改為 pt-5，避免文字頂到上方的標題
+               2. 加入 pb-1，確保下方文字不會貼底被裁切 
+            */}
+            <p className="text-[#FDF2F2] font-serif text-[13px] leading-relaxed pt-5 pb-1">
               {result.comment}
             </p>
           </div>
         </div>
 
-        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE V1.0.7</div>
+        <div className="mt-2 text-[7px] text-gray-300 font-mono tracking-widest uppercase">2026 HORSE YEAR AI ENGINE v1.0.8</div>
       </div>
 
       <div className="w-full max-w-[380px] space-y-2 mt-3 no-screenshot pb-8">
@@ -203,5 +211,4 @@ const ResultView: React.FC<Props> = ({ result, onBack }) => {
     </div>
   );
 };
-
 export default ResultView;
